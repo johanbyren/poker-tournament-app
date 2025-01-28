@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 
-export interface ChipValues {
-    white: number;
-    red: number;
-    // Lägg till fler färger här vid behov
-};
-
 export interface Prizes {
     place: number;
     prize: number;
+}
+
+export interface Chips {
+    color: string;
+    value: number;
 }
 
 const SettingsPage: React.FC = () => {
@@ -21,42 +20,38 @@ const SettingsPage: React.FC = () => {
     const [totalPrizePool, setTotalPrizePool] = useState(5000); // Denna kommer att beräknas
     const [startStack, setStartStack] = useState(2500);
     const [prizeDistribution, setPrizeDistribution] = useState<Prizes[]>([]);
+    const [chips, setChipValues] = useState<Chips[]>([]);
 
+
+    const [selectedColor, setSelectedColor] = useState('red');
+    const [chipValue, setChipValue] = useState(1);
+  
 
     const calculateTotalPrizePool = () => {
         setTotalPrizePool(players * buyIn);
     };
+
+    const handleColorChange = (event: any) => {
+        setSelectedColor(event.target.value);
+    };
+
+    const handleChipValueChange = (event: any) => {
+        setChipValue(parseInt(event.target.value));
+    };
+
+    const saveChip = () => {
+        chips.push({color: selectedColor, value: chipValue})
+        setChipValues(chips)
+        console.log('Alla sparade chips:', chips);
+    };
+
 
     const calculatePrizeDistribution = (players: number, totalPrizePool: number, buyIn: number) => {
         const numberOfPlayers =  players;
         const totalPrizeSum = totalPrizePool;
         const buyInSum = buyIn;
 
-        let proportions = [];
-        
-        if (numberOfPlayers <= 5) {
-          proportions = [100];
-        } else if (numberOfPlayers <= 8) {
-          proportions = [70, 30];
-        } else if (numberOfPlayers <= 15) {
-          proportions = [50, 30, 20];
-        } else if (numberOfPlayers <= 25) {
-          proportions = [50, 25, 20, 10];
-        } else {
-          // För större turneringar, ge priser till 1 av 10 spelare
-          const numberOfPrizes = Math.floor(numberOfPlayers / 10);
-          proportions = Array(numberOfPrizes).fill(0); // Initiera med nollor
-          proportions[0] = 40;
-          proportions[1] = 25;
-          proportions[2] = 20;
-          if (numberOfPrizes > 3) {
-            proportions[3] = 10;
-          }
-
-          if (numberOfPrizes > 4) {
-            proportions[4] = 5;
-          }
-        }
+        const proportions = calculatePrizeProportions(numberOfPlayers)
 
         // Beräkna priser baserat på proportioner
         let remainingPrizeSum = totalPrizeSum;
@@ -93,10 +88,53 @@ const SettingsPage: React.FC = () => {
         
     }
 
+
+    function calculatePrizeProportions(numberOfPlayers: number) {
+        // Basfördelning för upp till 25 spelare
+        const baseProportions: { [key: string]: number[] } = {
+          5: [100],
+          7: [70, 30],
+          10: [50, 30, 20],
+          25: [50, 25, 20, 10],
+          50: [30, 20, 15, 10, 8, 7, 5, 5],
+        };
+      
+        // Hitta den närmaste basfördelningen
+        let baseKey = Object.keys(baseProportions).find(key => numberOfPlayers <= parseInt(key, 10)) ?? 'defaultKey';
+        let proportions = baseProportions[baseKey];
+      
+        if (numberOfPlayers > 50) {
+          // Beräkna antalet extra prisplatser
+          const extraPrizes = Math.floor((numberOfPlayers - 25) / 10); 
+      
+          // Lägg till extra prisplatser med en initial fördelning (t.ex. 1% per plats)
+          proportions = [...proportions, ...Array(extraPrizes).fill(1)];
+      
+          // Justera proportionerna för att summera till 100%
+          const total = proportions.reduce((sum: any, p: any) => sum + p, 0);
+          const adjustmentFactor = 100 / total;
+          proportions = proportions.map((p: number) => Math.round(p * adjustmentFactor));
+      
+          // Om justeringen leder till att summan inte är exakt 100%, 
+          // korrigera det genom att lägga till/ta bort från den största andelen.
+          const newTotal = proportions.reduce((sum: any, p: any) => sum + p, 0);
+          if (newTotal !== 100) {
+            const diff = 100 - newTotal;
+            proportions[0] += diff;
+          }
+        }
+
+        console.log('proporions: ', proportions)
+      
+        return proportions;
+      }
+
     React.useEffect(() => {
         calculateTotalPrizePool();
+        
         const newPrizeDistribution = calculatePrizeDistribution(players, totalPrizePool, buyIn)
         setPrizeDistribution(newPrizeDistribution);
+
     }, [players, totalPrizePool, buyIn]);
 
     
@@ -108,19 +146,14 @@ const SettingsPage: React.FC = () => {
         // navigate('/TournamentPage', { state: { timerDuration, chipValues } }); 
     };
 
-    // const prizeDistribution: { place: number; prize: number }[] = []; // Skapa en lista för att lagra prisfördelningen
-    //const prizeDistribution = calculatePrizeDistribution(players, totalPrizePool, buyIn)
-
-
     return (
         <div>
-            <h1 className="poker-header">Pokertournament - Settings</h1>
+            <h1 className="poker-header">Pokertournament - Setup</h1>
 
-            <div className="container">
-                <div className="column">
-                    <div>
-                        <h2>Players info</h2>
-                    </div>
+            <div className="grid-container">
+
+                <div className="grid-item">
+                    <h2>Players settings</h2>
                     <div className="pt-3">
                         <input
                             type="number"
@@ -131,7 +164,6 @@ const SettingsPage: React.FC = () => {
                         />
                         <label className="cs-input__label p-3" htmlFor="players">Number of players</label>
                     </div>
-    
                     <div className="pt-3">
                         <input
                             type="number"
@@ -143,7 +175,6 @@ const SettingsPage: React.FC = () => {
                         />          
                         <label className="cs-input__label p-3" htmlFor="buyin">Buy-in</label>
                     </div>
-
                     <div className="pt-3">
                         <input
                             type="number"
@@ -151,23 +182,14 @@ const SettingsPage: React.FC = () => {
                             className="cs-input"
                             value={totalPrizePool}
                             readOnly
+                            // disabled
                         />
                         <label className="cs-input__label p-3" htmlFor="total-amount">Total amount of money in price pool</label>
                     </div>
                 </div>
 
-                <div className="column">
-                    <div>
-                        <h2>Price info</h2>
-                    </div>
-
-                    {/* <div className="pt-3">
-                        <div className="price-box">🥇 <span>2500</span></div>
-                        <div className="price-box">🥈 <span>1200</span></div>
-                        <div className="price-box">🥉 <span>800</span></div>
-                        <div className="price-box">4:th <span>500</span></div>
-                    </div> */}
-
+                <div className="grid-item">
+                    <h2>Price table info</h2>
                     <div className="pt-3">
                         {prizeDistribution.map((prize, index) => (
                             <div key={index} className="price-box">
@@ -180,50 +202,47 @@ const SettingsPage: React.FC = () => {
                         ))}
                     </div>
                 </div>
+               
 
-            </div>
+                <div className="grid-item">
+                    <h2>Chips settings</h2>
+                    <div className="pt-3">
+                        <select 
+                            className="cs-select" 
+                            name="colors" 
+                            id="colors"
+                            onChange={handleColorChange}>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="blue">Blue</option>
+                            <option value="black">Black</option>
+                            <option value="white">White</option>
+                        </select>
+                        <label  className="cs-input__label p-3" htmlFor="color">Choose a color for chip</label>
+                    </div>
 
+                    <div className="pt-3">
+                        <input
+                            type="number"
+                            id="chip-value"
+                            className="cs-input"
+                            value={chipValue}
+                            onChange={handleChipValueChange}
+                        />
+                        <label className="cs-input__label p-3" htmlFor="chip-value">Choose a value of the chip</label>
+                    </div>
 
-            {/* ... resten av koden (price-distribution, chips-table, levels-table, button) ... */}
-            <div className="price-distribution">
-
-                </div>
-                
-                <div className="chips-table">
-                    <h2>Chips color &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Value</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Chips color</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style={{color: 'white'}}>White</td>
-                                <td>1</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'red'}}>Red</td>
-                                <td>5</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'green'}}>Green</td>
-                                <td>10</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'blue'}}>Blue</td>
-                                <td>20</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'black'}}>Black</td>
-                                <td>50</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <button onClick={saveChip}>Spara</button>
                 </div>
 
-                <div className="levels-table">
+                <div className="grid-item">
+                    <h2>Selected chips</h2>
+
+                    <img src="../src/assets/marker_black.png" alt="Pixel art pokermark"/>
+
+                </div>
+
+                <div className="grid-item levels-table">
                     <table>
                         <thead>
                             <tr>
@@ -291,6 +310,51 @@ const SettingsPage: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+
+     
+            </div>
+
+
+            {/* ... resten av koden (price-distribution, chips-table, levels-table, button) ... */}
+            <div className="price-distribution">
+
+                </div>
+                
+                <div className="chips-table">
+                    <h2>Chips color &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Value</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Chips color</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style={{color: 'white'}}>White</td>
+                                <td>1</td>
+                            </tr>
+                            <tr>
+                                <td style={{color: 'red'}}>Red</td>
+                                <td>5</td>
+                            </tr>
+                            <tr>
+                                <td style={{color: 'green'}}>Green</td>
+                                <td>10</td>
+                            </tr>
+                            <tr>
+                                <td style={{color: 'blue'}}>Blue</td>
+                                <td>20</td>
+                            </tr>
+                            <tr>
+                                <td style={{color: 'black'}}>Black</td>
+                                <td>50</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                
 
                 <div className="player-settings">
                         <input

@@ -35,11 +35,26 @@ body {
 
 .container {
   display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
 }
 
-.column {
-  flex: 1;
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Två kolumner */
+  gap: 20px; /* Mellanrum mellan kolumner och rader */
   padding: 20px;
+}
+
+.grid-item {
+  background-color: #2f3e2e;
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+}
+
+.levels-table {
+  overflow-x: auto;
 }
 
 .price-box {

@@ -52,3 +52,23 @@ export default tseslint.config({
   },
 })
 ```
+
+# TODO and known bugs
+
+## 📝 TODO: 
+- [ ] Implement table for timetracking and raise. Values most be possible to edit. 
+- [ ] Implement the Tournament page and make it possible to change to it. 
+- [ ] Transfer the values from Setting page to Tournament page. 
+
+
+## 🐞 Kända Buggar
+1. **Page crash if you add more then 50 players**
+   - **Desription:** Something wrong with the code when adding more then 50 players on SettingsPage.
+   - **Status:** -.
+   - **Possible solution:** Check the function calculatePrizeProportions. We want to calculate the prizepool for every 10th player.
+
+2. **Page crash if you delete or change number of players or buy in with keyboard**
+   - **Desription:** We calculate the values on every change of the numbers, so it cant handle wierd* numbers. 
+   - **Status:** -.
+   - **Possible solution:** Check the function calculateTotalPrizePool. 
+
