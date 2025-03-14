@@ -40,10 +40,19 @@ const SettingsPage: React.FC = () => {
     };
 
     const saveChip = () => {
-        chips.push({color: selectedColor, value: chipValue})
-        setChipValues(chips)
-        console.log('Alla sparade chips:', chips);
-    };
+        // Kontrollera om färgen redan finns i arrayen
+        const existingChipIndex = chips.findIndex(chip => chip.color === selectedColor);
+      
+        if (existingChipIndex > -1) {
+          // Färgen finns redan, uppdatera värdet
+          const newChips = [...chips];
+          newChips[existingChipIndex] = { color: selectedColor, value: chipValue };
+          setChipValues(newChips);
+        } else {
+          // Färgen finns inte, lägg till ett nytt chip
+          setChipValues([...chips, { color: selectedColor, value: chipValue }]);
+        }
+      };
 
 
     const calculatePrizeDistribution = (players: number, totalPrizePool: number, buyIn: number) => {
@@ -206,6 +215,19 @@ const SettingsPage: React.FC = () => {
 
                 <div className="grid-item">
                     <h2>Chips settings</h2>
+
+                    <div className="player-settings">
+                        <input
+                            type="number"
+                            id="start-stack"
+                            className="cs-input"
+                            value={startStack}
+                            step={10}
+                            onChange={(e) => setStartStack(parseInt(e.target.value))}
+                        />
+                        <label className="cs-input__label label p-3" htmlFor="start-stack">Start stack</label>
+                    </div>
+
                     <div className="pt-3">
                         <select 
                             className="cs-select" 
@@ -228,18 +250,29 @@ const SettingsPage: React.FC = () => {
                             className="cs-input"
                             value={chipValue}
                             onChange={handleChipValueChange}
+                            min={1}
                         />
                         <label className="cs-input__label p-3" htmlFor="chip-value">Choose a value of the chip</label>
                     </div>
 
-                    <button onClick={saveChip}>Spara</button>
+                    <div className="pt-3">
+                        <button className="cs-btn" onClick={saveChip}>Add chip</button>
+                    </div>
                 </div>
 
                 <div className="grid-item">
                     <h2>Selected chips</h2>
 
-                    <img src="../src/assets/marker_black.png" alt="Pixel art pokermark"/>
-
+                    {chips.map((chip, index) => (
+                        <div key={index} className="chip-display">
+                            <img
+                            className="size-8"
+                            src={`../src/assets/marker_${chip.color}.png`}
+                            alt={`${chip.color} poker chip`}
+                            />
+                            <span>{chip.value}</span>
+                        </div>
+                    ))}
                 </div>
 
                 <div className="grid-item levels-table">
@@ -356,16 +389,7 @@ const SettingsPage: React.FC = () => {
 
                 
 
-                <div className="player-settings">
-                        <input
-                            type="number"
-                            id="start-stack"
-                            className="cs-input"
-                            value={startStack}
-                            onChange={(e) => setStartStack(parseInt(e.target.value))}
-                        />
-                        <label className="cs-input__label label" htmlFor="start-stack">Start stack</label>
-                    </div>
+
 
             <button id="start-tournament"  onClick={startTournament}>
                 Start Tournament
