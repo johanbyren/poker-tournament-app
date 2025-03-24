@@ -60,6 +60,17 @@ export default tseslint.config({
 - [ ] Implement the Tournament page and make it possible to change to it. 
 - [ ] Transfer the values from Setting page to Tournament page. 
 
+# Poker Tournament App
+
+This application helps you manage a poker tournament. It allows you to configure the following settings:
+
+* Number of players
+* Buy-in amount
+* Starting stack size
+* Chip denominations and colors
+* Blind structure
+
+The app automatically calculates the prize pool and distribution based on the number of players and buy-in. It also provides a visual representation of the chip values and blind levels.  You can then start the tournament and track its progress.
 
 ## 🐞 Kända Buggar
 1. **Page crash if you add more then 50 players**
