@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import kitten from '../assets/kitten.jpg'; // Import the kitten image
 import { useNavigate } from 'react-router-dom';
 
 export interface Prizes {
@@ -32,6 +33,7 @@ export interface TournamentData {
 
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
+    const [kittenSrc, setKittenSrc] = useState(kitten);
 
     // State for the values, with some standard values
     const [players, setPlayers] = useState(10);
@@ -294,6 +296,7 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div>
+            <img src={kittenSrc} alt="Kitten" onClick={() => alert('Mjau')} style={{ cursor: 'pointer', maxWidth: '200px' }} />
             <h1 className="poker-header">Pokertournament - Setup</h1>
 
             <div className="grid-container">
