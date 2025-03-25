@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export interface Prizes {
     place: number;
@@ -32,6 +32,7 @@ export interface TournamentData {
 
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
 
     // State for the values, with some standard values
     const [players, setPlayers] = useState(10);
@@ -55,6 +56,21 @@ const SettingsPage: React.FC = () => {
     const [selectedColor, setSelectedColor] = useState('red');
     const [chipValue, setChipValue] = useState(1);
   
+
+    // Load saved tournament data when component mounts
+    useEffect(() => {
+        const savedData = localStorage.getItem('tournamentData');
+        if (savedData) {
+            const tournamentData: TournamentData = JSON.parse(savedData);
+            setPlayers(tournamentData.players);
+            setBuyIn(tournamentData.buyIn);
+            setTotalPrizePool(tournamentData.totalPrizePool);
+            setStartStack(tournamentData.startStack);
+            setPrizeDistribution(tournamentData.prizeDistribution);
+            setChipValues(tournamentData.chips);
+            setLevels(tournamentData.levels);
+        }
+    }, []);
 
     const calculateTotalPrizePool = () => {
         setTotalPrizePool(players * buyIn);
@@ -187,7 +203,10 @@ const SettingsPage: React.FC = () => {
             levels
         };
 
-        console.log('Tournament Data:', tournamentData);
+        // Save to local storage
+        localStorage.setItem('tournamentData', JSON.stringify(tournamentData));
+        
+        // Navigate to tournament page
         navigate('/TournamentPage', { state: { tournamentData } }); 
     };
 
@@ -352,144 +371,149 @@ const SettingsPage: React.FC = () => {
 
                 <div className="grid-item">
                     <h2>Chips settings</h2>
-
-                    <div className="player-settings">
-                        <input
-                            type="number"
-                            id="start-stack"
-                            className="cs-input"
-                            value={startStack}
-                            step={10}
-                            onChange={(e) => setStartStack(parseInt(e.target.value))}
-                        />
-                        <label className="cs-input__label label p-3" htmlFor="start-stack">Start stack</label>
-                    </div>
-
                     <div className="pt-3">
-                        <select 
-                            className="cs-select" 
-                            name="colors" 
-                            id="colors"
-                            onChange={handleColorChange}>
-                            <option value="red">Red</option>
-                            <option value="green">Green</option>
-                            <option value="blue">Blue</option>
-                            <option value="black">Black</option>
-                            <option value="white">White</option>
-                        </select>
-                        <label  className="cs-input__label p-3" htmlFor="color">Choose a color for chip</label>
-                    </div>
+                        <div className="player-settings">
+                            <input
+                                type="number"
+                                id="start-stack"
+                                className="cs-input"
+                                value={startStack}
+                                step={10}
+                                onChange={(e) => setStartStack(parseInt(e.target.value))}
+                            />
+                            <label className="cs-input__label label p-3" htmlFor="start-stack">Start stack</label>
+                        </div>
 
-                    <div className="pt-3">
-                        <input
-                            type="number"
-                            id="chip-value"
-                            className="cs-input"
-                            value={chipValue}
-                            onChange={handleChipValueChange}
-                            min={1}
-                        />
-                        <label className="cs-input__label p-3" htmlFor="chip-value">Choose a value of the chip</label>
-                    </div>
+                        <div className="pt-3">
+                            <select 
+                                className="cs-select" 
+                                name="colors" 
+                                id="colors"
+                                onChange={handleColorChange}>
+                                <option value="red">Red</option>
+                                <option value="green">Green</option>
+                                <option value="blue">Blue</option>
+                                <option value="black">Black</option>
+                                <option value="white">White</option>
+                            </select>
+                            <label  className="cs-input__label p-3" htmlFor="color">Choose a color for chip</label>
+                        </div>
 
-                    <div className="pt-3">
-                        <button className="cs-btn" onClick={saveChip}>Add chip</button>
+                        <div className="pt-3">
+                            <input
+                                type="number"
+                                id="chip-value"
+                                className="cs-input"
+                                value={chipValue}
+                                onChange={handleChipValueChange}
+                                min={1}
+                            />
+                            <label className="cs-input__label p-3" htmlFor="chip-value">Choose a value of the chip</label>
+                        </div>
+
+                        <div className="pt-3">
+                            <button className="cs-btn" onClick={saveChip}>Add chip</button>
+                        </div>
                     </div>
                 </div>
 
                 <div className="grid-item">
                     <h2>Selected chips</h2>
-                    <div className="chips-container">
-                        {[...chips]
-                            .sort((a, b) => a.value - b.value)
-                            .map((chip, index) => (
-                                <div key={index} className="chip-display">
-                                    <img
-                                        className="size-8"
-                                        src={`../src/assets/marker_${chip.color}.png`}
-                                        alt={`${chip.color} poker chip`}
-                                    />
-                                    <span>{chip.value}</span>
-                                </div>
-                            ))}
+                    <div className="pt-3">
+                        <div className="chips-container">
+                            {[...chips]
+                                .sort((a, b) => a.value - b.value)
+                                .map((chip, index) => (
+                                    <div key={index} className="chip-display">
+                                        <img
+                                            className="size-8"
+                                            src={`../src/assets/marker_${chip.color}.png`}
+                                            alt={`${chip.color} poker chip`}
+                                        />
+                                        <span className="text-sm">{chip.value}</span>
+                                    </div>
+                                ))}
+                        </div>
                     </div>
                 </div>
 
                 <div className="grid-item levels-table">
                     <h2>Levels and Breaks</h2>
-                    <div className="level-controls mb-4">
-                        <button className="cs-btn mr-2" onClick={addNewLevel}>Add Level</button>
-                        <button className="cs-btn mr-2" onClick={addBreak}>Add Break</button>
-                        <div className="inline-block">
-                            <input
-                                type="number"
-                                className="cs-input w-24"
-                                placeholder="Time (min)"
-                                onChange={(e) => updateAllTimes(parseInt(e.target.value))}
-                            />
-                            <label className="cs-input__label ml-2">Update all times</label>
+                    <div className="pt-3">
+                        <div className="level-controls mb-4">
+                            <button className="cs-btn mr-2" onClick={addNewLevel}>Add Level</button>
+                            <button className="cs-btn mr-2" onClick={addBreak}>Add Break</button>
+                            <div className="inline-block">
+                                <input
+                                    type="number"
+                                    className="cs-input"
+                                    placeholder="Time (min)"
+                                    onChange={(e) => updateAllTimes(parseInt(e.target.value))}
+                                />
+                                <label className="cs-input__label ml-2">Update all times</label>
+                            </div>
                         </div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Level</th>
-                                <th>Small</th>
-                                <th>Big</th>
-                                <th>Time (min)</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {levels.map((level) => (
-                                <tr key={level.id}>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            className="cs-input w-20"
-                                            value={level.isBreak ? "Break" : level.level}
-                                            onChange={(e) => handleLevelChange(level.id, 'level', e.target.value)}
-                                            disabled={level.isBreak}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            className="cs-input w-20"
-                                            value={level.isBreak ? "Break" : level.small}
-                                            onChange={(e) => handleLevelChange(level.id, 'small', parseInt(e.target.value))}
-                                            disabled={level.isBreak}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            className="cs-input w-20"
-                                            value={level.isBreak ? "Break" : level.big}
-                                            onChange={(e) => handleLevelChange(level.id, 'big', parseInt(e.target.value))}
-                                            disabled={level.isBreak}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="number"
-                                            className="cs-input w-20"
-                                            value={level.time}
-                                            onChange={(e) => handleLevelChange(level.id, 'time', parseInt(e.target.value))}
-                                        />
-                                    </td>
-                                    <td>
-                                        <button 
-                                            className="cs-btn bg-red-600 hover:bg-red-700"
-                                            onClick={() => deleteLevel(level.id)}
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Level</th>
+                                    <th>Small</th>
+                                    <th>Big</th>
+                                    <th>Time (min)</th>
+                                    <th>Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {levels.map((level) => (
+                                    <tr key={level.id}>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                className="cs-input w-20"
+                                                value={level.isBreak ? "Break" : level.level}
+                                                onChange={(e) => handleLevelChange(level.id, 'level', e.target.value)}
+                                                disabled={level.isBreak}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                className="cs-input w-20"
+                                                value={level.isBreak ? "Break" : level.small}
+                                                onChange={(e) => handleLevelChange(level.id, 'small', parseInt(e.target.value))}
+                                                disabled={level.isBreak}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                className="cs-input w-20"
+                                                value={level.isBreak ? "Break" : level.big}
+                                                onChange={(e) => handleLevelChange(level.id, 'big', parseInt(e.target.value))}
+                                                disabled={level.isBreak}
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                className="cs-input w-20"
+                                                value={level.time}
+                                                onChange={(e) => handleLevelChange(level.id, 'time', parseInt(e.target.value))}
+                                            />
+                                        </td>
+                                        <td>
+                                            <button 
+                                                className="cs-btn bg-red-600 hover:bg-red-700"
+                                                onClick={() => deleteLevel(level.id)}
+                                            >
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div className="grid-item">
