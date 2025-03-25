@@ -7,7 +7,7 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   background-color: #4a5942; /* För att matcha sidans design */
 }
 
@@ -26,6 +26,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 .poker-header {
@@ -37,6 +38,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
+  flex: 1;
 }
 
 .grid-container {
@@ -44,6 +46,7 @@ body {
   grid-template-columns: 1fr 1fr; /* Två kolumner */
   gap: 20px; /* Mellanrum mellan kolumner och rader */
   padding: 20px;
+  flex: 1;
 }
 
 .grid-item {
@@ -51,6 +54,7 @@ body {
   padding: 20px;
   border-radius: 8px;
   color: white;
+  height: fit-content;
 }
 
 .levels-table {
@@ -66,4 +70,67 @@ body {
 .price-box span {
   margin-left: 5px;
   font-weight: bold;
+}
+
+/* Levels table styles */
+.level-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.levels-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.levels-table th,
+.levels-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.levels-table th {
+  background-color: rgba(0, 0, 0, 0.2);
+  font-weight: bold;
+}
+
+.levels-table input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.levels-table input:disabled {
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: not-allowed;
+}
+
+.levels-table input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.levels-table .cs-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chip-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
 }

@@ -11,17 +11,46 @@ export interface Chips {
     value: number;
 }
 
+export interface Level {
+    id: number;
+    level: string;
+    small: number;
+    big: number;
+    time: number;
+    isBreak: boolean;
+}
+
+export interface TournamentData {
+    players: number;
+    buyIn: number;
+    totalPrizePool: number;
+    startStack: number;
+    prizeDistribution: Prizes[];
+    chips: Chips[];
+    levels: Level[];
+}
+
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
 
     // State for the values, with some standard values
     const [players, setPlayers] = useState(10);
     const [buyIn, setBuyIn] = useState(500);
-    const [totalPrizePool, setTotalPrizePool] = useState(5000); // Denna kommer att beräknas
+    const [totalPrizePool, setTotalPrizePool] = useState(5000);
     const [startStack, setStartStack] = useState(2500);
     const [prizeDistribution, setPrizeDistribution] = useState<Prizes[]>([]);
     const [chips, setChipValues] = useState<Chips[]>([]);
-
+    const [levels, setLevels] = useState<Level[]>([
+        { id: 1, level: "1", small: 10, big: 20, time: 15, isBreak: false },
+        { id: 2, level: "2", small: 25, big: 50, time: 15, isBreak: false },
+        { id: 3, level: "3", small: 50, big: 100, time: 15, isBreak: false },
+        { id: 4, level: "4", small: 75, big: 150, time: 15, isBreak: false },
+        { id: 5, level: "Break", small: 0, big: 0, time: 15, isBreak: true },
+        { id: 6, level: "5", small: 150, big: 300, time: 20, isBreak: false },
+        { id: 7, level: "6", small: 200, big: 400, time: 20, isBreak: false },
+        { id: 8, level: "7", small: 350, big: 700, time: 20, isBreak: false },
+        { id: 9, level: "8", small: 500, big: 1000, time: 20, isBreak: false },
+    ]);
 
     const [selectedColor, setSelectedColor] = useState('red');
     const [chipValue, setChipValue] = useState(1);
@@ -148,11 +177,119 @@ const SettingsPage: React.FC = () => {
 
     
     const startTournament = () => {
-        console.log('Turnering startad!');
-        // console.log('Timer:', timerDuration);
-        // console.log('Marker:', chipValues);
-        navigate('/TournamentPage', { state: { } }); 
-        // navigate('/TournamentPage', { state: { timerDuration, chipValues } }); 
+        const tournamentData: TournamentData = {
+            players,
+            buyIn,
+            totalPrizePool,
+            startStack,
+            prizeDistribution,
+            chips,
+            levels
+        };
+
+        console.log('Tournament Data:', tournamentData);
+        navigate('/TournamentPage', { state: { tournamentData } }); 
+    };
+
+    // Level management functions
+    const handleLevelChange = (id: number, field: keyof Level, value: string | number | boolean) => {
+        setLevels(levels.map(level => {
+            if (level.id === id) {
+                const updatedLevel = { ...level, [field]: value };
+                // If small blind changes, update big blind automatically
+                if (field === 'small' && !level.isBreak) {
+                    updatedLevel.big = (value as number) * 2;
+                }
+                return updatedLevel;
+            }
+            return level;
+        }));
+    };
+
+    const getNextLevelNumber = () => {
+        // Get all non-break levels and their numbers
+        const levelNumbers = levels
+            .filter(level => !level.isBreak)
+            .map(level => parseInt(level.level))
+            .sort((a, b) => a - b);
+        
+        // If no levels exist, start at 1
+        if (levelNumbers.length === 0) return 1;
+        
+        // Find the first missing number in the sequence
+        for (let i = 1; i <= levelNumbers.length; i++) {
+            if (!levelNumbers.includes(i)) {
+                return i;
+            }
+        }
+        
+        // If no gaps found, return the next number
+        return Math.max(...levelNumbers) + 1;
+    };
+
+    const addNewLevel = () => {
+        const newId = Math.max(...levels.map(l => l.id)) + 1;
+        const nextLevelNumber = getNextLevelNumber();
+        
+        // Find the last non-break level
+        const lastNonBreakLevel = [...levels]
+            .reverse()
+            .find(level => !level.isBreak);
+
+        // Calculate new blind levels based on the last level
+        const newSmall = lastNonBreakLevel ? lastNonBreakLevel.small * 2 : 0;
+        const newBig = lastNonBreakLevel ? lastNonBreakLevel.big * 2 : 0;
+
+        const newLevel: Level = {
+            id: newId,
+            level: nextLevelNumber.toString(),
+            small: newSmall,
+            big: newBig,
+            time: 15,
+            isBreak: false
+        };
+        setLevels([...levels, newLevel]);
+    };
+
+    const addBreak = () => {
+        const newId = Math.max(...levels.map(l => l.id)) + 1;
+        const newBreak: Level = {
+            id: newId,
+            level: "Break",
+            small: 0,
+            big: 0,
+            time: 15,
+            isBreak: true
+        };
+        setLevels([...levels, newBreak]);
+    };
+
+    const deleteLevel = (id: number) => {
+        // First remove the level
+        const remainingLevels = levels.filter(level => level.id !== id);
+        
+        // Then reorder the remaining non-break levels
+        const reorderedLevels = remainingLevels.map(level => {
+            if (!level.isBreak) {
+                // Find how many non-break levels come before this one
+                const nonBreakLevelsBefore = remainingLevels
+                    .filter(l => !l.isBreak && l.id < level.id)
+                    .length;
+                
+                // The new level number should be the count of non-break levels before this one + 1
+                return {
+                    ...level,
+                    level: (nonBreakLevelsBefore + 1).toString()
+                };
+            }
+            return level;
+        });
+
+        setLevels(reorderedLevels);
+    };
+
+    const updateAllTimes = (newTime: number) => {
+        setLevels(levels.map(level => ({ ...level, time: newTime })));
     };
 
     return (
@@ -262,138 +399,109 @@ const SettingsPage: React.FC = () => {
 
                 <div className="grid-item">
                     <h2>Selected chips</h2>
-
-                    {chips.map((chip, index) => (
-                        <div key={index} className="chip-display">
-                            <img
-                            className="size-8"
-                            src={`../src/assets/marker_${chip.color}.png`}
-                            alt={`${chip.color} poker chip`}
-                            />
-                            <span>{chip.value}</span>
-                        </div>
-                    ))}
+                    <div className="chips-container">
+                        {[...chips]
+                            .sort((a, b) => a.value - b.value)
+                            .map((chip, index) => (
+                                <div key={index} className="chip-display">
+                                    <img
+                                        className="size-8"
+                                        src={`../src/assets/marker_${chip.color}.png`}
+                                        alt={`${chip.color} poker chip`}
+                                    />
+                                    <span>{chip.value}</span>
+                                </div>
+                            ))}
+                    </div>
                 </div>
 
                 <div className="grid-item levels-table">
+                    <h2>Levels and Breaks</h2>
+                    <div className="level-controls mb-4">
+                        <button className="cs-btn mr-2" onClick={addNewLevel}>Add Level</button>
+                        <button className="cs-btn mr-2" onClick={addBreak}>Add Break</button>
+                        <div className="inline-block">
+                            <input
+                                type="number"
+                                className="cs-input w-24"
+                                placeholder="Time (min)"
+                                onChange={(e) => updateAllTimes(parseInt(e.target.value))}
+                            />
+                            <label className="cs-input__label ml-2">Update all times</label>
+                        </div>
+                    </div>
                     <table>
                         <thead>
                             <tr>
                                 <th>Level</th>
                                 <th>Small</th>
                                 <th>Big</th>
-                                <th>Time</th>
+                                <th>Time (min)</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>10</td>
-                                <td>20</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>25</td>
-                                <td>50</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>50</td>
-                                <td>100</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>4</td>
-                                <td>75</td>
-                                <td>150</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>Break</td>
-                                <td>Break</td>
-                                <td>Break</td>
-                                <td>Break</td>
-                            </tr>
-                            <tr>
-                                <td>5</td>
-                                <td>150</td>
-                                <td>300</td>
-                                <td>20 min</td>
-                            </tr>
-                            <tr>
-                                <td>6</td>
-                                <td>200</td>
-                                <td>400</td>
-                                <td>20 min</td>
-                            </tr>
-                            <tr>
-                                <td>7</td>
-                                <td>350</td>
-                                <td>700</td>
-                                <td>20 min</td>
-                            </tr>
-                            <tr>
-                                <td>8</td>
-                                <td>500</td>
-                                <td>1000</td>
-                                <td>20 min</td>
-                            </tr>
+                            {levels.map((level) => (
+                                <tr key={level.id}>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            className="cs-input w-20"
+                                            value={level.isBreak ? "Break" : level.level}
+                                            onChange={(e) => handleLevelChange(level.id, 'level', e.target.value)}
+                                            disabled={level.isBreak}
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            className="cs-input w-20"
+                                            value={level.isBreak ? "Break" : level.small}
+                                            onChange={(e) => handleLevelChange(level.id, 'small', parseInt(e.target.value))}
+                                            disabled={level.isBreak}
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            className="cs-input w-20"
+                                            value={level.isBreak ? "Break" : level.big}
+                                            onChange={(e) => handleLevelChange(level.id, 'big', parseInt(e.target.value))}
+                                            disabled={level.isBreak}
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="number"
+                                            className="cs-input w-20"
+                                            value={level.time}
+                                            onChange={(e) => handleLevelChange(level.id, 'time', parseInt(e.target.value))}
+                                        />
+                                    </td>
+                                    <td>
+                                        <button 
+                                            className="cs-btn bg-red-600 hover:bg-red-700"
+                                            onClick={() => deleteLevel(level.id)}
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
 
-     
+                <div className="grid-item">
+                    <button 
+                        id="start-tournament" 
+                        onClick={startTournament}
+                        className="cs-btn bg-green-600 hover:bg-green-700 text-lg px-8 py-3 w-full"
+                    >
+                        Start Tournament
+                    </button>
+                </div>
             </div>
-
-
-            {/* ... resten av koden (price-distribution, chips-table, levels-table, button) ... */}
-            <div className="price-distribution">
-
-                </div>
-                
-                <div className="chips-table">
-                    <h2>Chips color &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Value</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Chips color</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style={{color: 'white'}}>White</td>
-                                <td>1</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'red'}}>Red</td>
-                                <td>5</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'green'}}>Green</td>
-                                <td>10</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'blue'}}>Blue</td>
-                                <td>20</td>
-                            </tr>
-                            <tr>
-                                <td style={{color: 'black'}}>Black</td>
-                                <td>50</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                
-
-
-
-            <button id="start-tournament"  onClick={startTournament}>
-                Start Tournament
-            </button>
         </div>
     );
 };
