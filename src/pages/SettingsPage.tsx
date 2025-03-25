@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 export interface Prizes {
     place: number;
@@ -40,7 +41,20 @@ const SettingsPage: React.FC = () => {
     const [startStack, setStartStack] = useState(2500);
     const [prizeDistribution, setPrizeDistribution] = useState<Prizes[]>([]);
     const [chips, setChipValues] = useState<Chips[]>([]);
-    const [levels, setLevels] = useState<Level[]>([
+    const [levels, setLevels] = useState<Level[]>(() => {
+        const storedLevels = localStorage.getItem('pokerLevels');
+        return storedLevels ? JSON.parse(storedLevels) : [
+            { id: 1, level: "1", small: 10, big: 20, time: 15, isBreak: false },
+            { id: 2, level: "2", small: 25, big: 50, time: 15, isBreak: false },
+            { id: 3, level: "3", small: 50, big: 100, time: 15, isBreak: false },
+            { id: 4, level: "4", small: 75, big: 150, time: 15, isBreak: false },
+            { id: 5, level: "Break", small: 0, big: 0, time: 15, isBreak: true },
+            { id: 6, level: "5", small: 150, big: 300, time: 20, isBreak: false },
+            { id: 7, level: "6", small: 200, big: 400, time: 20, isBreak: false },
+            { id: 8, level: "7", small: 350, big: 700, time: 20, isBreak: false },
+            { id: 9, level: "8", small: 500, big: 1000, time: 20, isBreak: false },
+        ];
+    });
         { id: 1, level: "1", small: 10, big: 20, time: 15, isBreak: false },
         { id: 2, level: "2", small: 25, big: 50, time: 15, isBreak: false },
         { id: 3, level: "3", small: 50, big: 100, time: 15, isBreak: false },
@@ -286,9 +300,21 @@ const SettingsPage: React.FC = () => {
         });
 
         setLevels(reorderedLevels);
+        saveLevelsData(reorderedLevels);
     };
 
-    const updateAllTimes = (newTime: number) => {
+    
+    const saveLevelsData = (levelsData: Level[]) => {
+        localStorage.setItem('pokerLevels', JSON.stringify(levelsData));
+    };
+
+    useEffect(() => {
+        saveLevelsData(levels);
+    }, [levels]);
+
+    const handleSaveLevels = () => {
+        saveLevelsData(levels);
+    };const updateAllTimes = (newTime: number) => {
         setLevels(levels.map(level => ({ ...level, time: newTime })));
     };
 
@@ -417,7 +443,8 @@ const SettingsPage: React.FC = () => {
 
                 <div className="grid-item levels-table">
                     <h2>Levels and Breaks</h2>
-                    <div className="level-controls mb-4">
+                    
+                        <button className="cs-btn mr-2" onClick={handleSaveLevels}>Save Levels</button><div className="level-controls mb-4">
                         <button className="cs-btn mr-2" onClick={addNewLevel}>Add Level</button>
                         <button className="cs-btn mr-2" onClick={addBreak}>Add Break</button>
                         <div className="inline-block">
