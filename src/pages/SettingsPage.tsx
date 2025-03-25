@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Level } from '../types';
 
 export interface Prizes {
     place: number;
@@ -9,6 +10,13 @@ export interface Prizes {
 export interface Chips {
     color: string;
     value: number;
+}
+
+export interface Level {
+    level: number | string;
+    smallBlind: number;
+    bigBlind: number;
+    time: string;
 }
 
 const SettingsPage: React.FC = () => {
@@ -21,6 +29,17 @@ const SettingsPage: React.FC = () => {
     const [startStack, setStartStack] = useState(2500);
     const [prizeDistribution, setPrizeDistribution] = useState<Prizes[]>([]);
     const [chips, setChipValues] = useState<Chips[]>([]);
+    const [levels, setLevels] = useState<Level[]>([
+        { level: 1, smallBlind: 10, bigBlind: 20, time: '15 min' },
+        { level: 2, smallBlind: 25, bigBlind: 50, time: '15 min' },
+        { level: 3, smallBlind: 50, bigBlind: 100, time: '15 min' },
+        { level: 4, smallBlind: 75, bigBlind: 150, time: '15 min' },
+        { level: 'Break', smallBlind: 0, bigBlind: 0, time: 'Break' },
+        { level: 5, smallBlind: 150, bigBlind: 300, time: '20 min' },
+        { level: 6, smallBlind: 200, bigBlind: 400, time: '20 min' },
+        { level: 7, smallBlind: 350, bigBlind: 700, time: '20 min' },
+        { level: 8, smallBlind: 500, bigBlind: 1000, time: '20 min' },
+    ]);
 
 
     const [selectedColor, setSelectedColor] = useState('red');
@@ -151,7 +170,7 @@ const SettingsPage: React.FC = () => {
         console.log('Turnering startad!');
         // console.log('Timer:', timerDuration);
         // console.log('Marker:', chipValues);
-        navigate('/TournamentPage', { state: { } }); 
+        navigate('/TournamentPage', { state: { levels } }); 
         // navigate('/TournamentPage', { state: { timerDuration, chipValues } }); 
     };
 
@@ -286,60 +305,14 @@ const SettingsPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>10</td>
-                                <td>20</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>25</td>
-                                <td>50</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>50</td>
-                                <td>100</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>4</td>
-                                <td>75</td>
-                                <td>150</td>
-                                <td>15 min</td>
-                            </tr>
-                            <tr>
-                                <td>Break</td>
-                                <td>Break</td>
-                                <td>Break</td>
-                                <td>Break</td>
-                            </tr>
-                            <tr>
-                                <td>5</td>
-                                <td>150</td>
-                                <td>300</td>
-                                <td>20 min</td>
-                            </tr>
-                            <tr>
-                                <td>6</td>
-                                <td>200</td>
-                                <td>400</td>
-                                <td>20 min</td>
-                            </tr>
-                            <tr>
-                                <td>7</td>
-                                <td>350</td>
-                                <td>700</td>
-                                <td>20 min</td>
-                            </tr>
-                            <tr>
-                                <td>8</td>
-                                <td>500</td>
-                                <td>1000</td>
-                                <td>20 min</td>
-                            </tr>
+                            {levels.map((level, index) => (
+                                <tr key={index}>
+                                    <td><input type="text" value={level.level} onChange={(e) => { const newLevels = [...levels]; newLevels[index].level = e.target.value; setLevels(newLevels); }} /></td>
+                                    <td><input type="number" value={level.smallBlind} onChange={(e) => { const newLevels = [...levels]; newLevels[index].smallBlind = parseInt(e.target.value); setLevels(newLevels); }} /></td>
+                                    <td><input type="number" value={level.bigBlind} onChange={(e) => { const newLevels = [...levels]; newLevels[index].bigBlind = parseInt(e.target.value); setLevels(newLevels); }} /></td>
+                                    <td><input type="text" value={level.time} onChange={(e) => { const newLevels = [...levels]; newLevels[index].time = e.target.value; setLevels(newLevels); }} /></td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
