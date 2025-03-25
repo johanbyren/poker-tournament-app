@@ -55,6 +55,7 @@ const SettingsPage: React.FC = () => {
 
     const [selectedColor, setSelectedColor] = useState('red');
     const [chipValue, setChipValue] = useState(1);
+    const [isTournamentActive, setIsTournamentActive] = useState(false);
   
 
     // Load saved tournament data when component mounts
@@ -72,8 +73,16 @@ const SettingsPage: React.FC = () => {
         }
     }, []);
 
+    // Check if tournament is active on component mount
+    useEffect(() => {
+        const timerState = localStorage.getItem('timerState');
+        setIsTournamentActive(!!timerState);
+    }, []);
+
     const calculateTotalPrizePool = () => {
-        setTotalPrizePool(players * buyIn);
+        const validPlayers = players || 0;
+        const validBuyIn = buyIn || 0;
+        setTotalPrizePool(validPlayers * validBuyIn);
     };
 
     const handleColorChange = (event: any) => {
@@ -81,7 +90,8 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleChipValueChange = (event: any) => {
-        setChipValue(parseInt(event.target.value));
+        const value = event.target.value === '' ? 1 : parseInt(event.target.value);
+        setChipValue(value);
     };
 
     const saveChip = () => {
@@ -100,93 +110,78 @@ const SettingsPage: React.FC = () => {
       };
 
 
-    const calculatePrizeDistribution = (players: number, totalPrizePool: number, buyIn: number) => {
-        const numberOfPlayers =  players;
-        const totalPrizeSum = totalPrizePool;
-        const buyInSum = buyIn;
+    const calculatePrizeProportions = (numberOfPlayers: number) => {
+        // Cap number of players at 100
+        const cappedPlayers = Math.min(numberOfPlayers, 100);
 
-        const proportions = calculatePrizeProportions(numberOfPlayers)
-
-        // Beräkna priser baserat på proportioner
-        let remainingPrizeSum = totalPrizeSum;
-        const newPrizeDistribution = [];
-
-
-        for (let i = 0; i < proportions.length; i++) {
-            const prize = Math.floor((totalPrizeSum * proportions[i]) / 100 / buyInSum) * buyInSum;
-            newPrizeDistribution.push({ place: i + 1, prize });
-            remainingPrizeSum -= prize;
-        }
-
-        // Fördela återstående summa proportionellt baserat på prisskillnad
-        if (remainingPrizeSum > 0 && newPrizeDistribution.length > 1) {
-            let prizeDiffSum = 0;
-            for (let i = 0; i < newPrizeDistribution.length - 1; i++) { // Exkludera sista platsen
-                const nextPrize = newPrizeDistribution[i + 1]?.prize || 0; // Nästa plats pris, eller 0 om det är sista platsen
-                prizeDiffSum += newPrizeDistribution[i].prize - nextPrize; 
-            }
-
-            for (let i = 0; i < newPrizeDistribution.length - 1; i++) { // Exkludera sista platsen
-                const nextPrize = newPrizeDistribution[i + 1]?.prize || 0;
-                const extraPrize = Math.floor((remainingPrizeSum * (newPrizeDistribution[i].prize - nextPrize)) / prizeDiffSum / buyInSum) * buyInSum;
-                newPrizeDistribution[i].prize += extraPrize;
-                remainingPrizeSum -= extraPrize;
-            }
-            
-            // Lägg eventuellt kvarvarande belopp till första platsen (för att undvika avrundningsfel)
-            newPrizeDistribution[0].prize += remainingPrizeSum;         
-        }
-
-        console.log('Priser: ', newPrizeDistribution)
-        return newPrizeDistribution; // Uppdatera state här
-        
-    }
-
-
-    function calculatePrizeProportions(numberOfPlayers: number) {
-        // Basfördelning för upp till 25 spelare
+        // Base prize distribution rules for different player counts
         const baseProportions: { [key: string]: number[] } = {
-          5: [100],
-          7: [70, 30],
-          10: [50, 30, 20],
-          25: [50, 25, 20, 10],
-          50: [30, 20, 15, 10, 8, 7, 5, 5],
+            5: [100],
+            7: [55, 25, 20],
+            10: [45, 20, 20, 10, 5],
+            25: [40, 25, 15, 10, 5, 5],
+            50: [30, 20, 15, 10, 8, 7, 5, 5],
+            100: [25, 17, 12, 7, 6, 5, 4, 4, 3, 3, 3, 2, 1]
         };
       
-        // Hitta den närmaste basfördelningen
-        let baseKey = Object.keys(baseProportions).find(key => numberOfPlayers <= parseInt(key, 10)) ?? 'defaultKey';
-        let proportions = baseProportions[baseKey];
-      
-        if (numberOfPlayers > 50) {
-          // Beräkna antalet extra prisplatser
-          const extraPrizes = Math.floor((numberOfPlayers - 25) / 10); 
-      
-          // Lägg till extra prisplatser med en initial fördelning (t.ex. 1% per plats)
-          proportions = [...proportions, ...Array(extraPrizes).fill(1)];
-      
-          // Justera proportionerna för att summera till 100%
-          const total = proportions.reduce((sum: any, p: any) => sum + p, 0);
-          const adjustmentFactor = 100 / total;
-          proportions = proportions.map((p: number) => Math.round(p * adjustmentFactor));
-      
-          // Om justeringen leder till att summan inte är exakt 100%, 
-          // korrigera det genom att lägga till/ta bort från den största andelen.
-          const newTotal = proportions.reduce((sum: any, p: any) => sum + p, 0);
-          if (newTotal !== 100) {
-            const diff = 100 - newTotal;
-            proportions[0] += diff;
-          }
+        // Find the appropriate base distribution
+        let proportions: number[];
+        if (cappedPlayers <= 5) {
+            proportions = baseProportions[5];
+        } else if (cappedPlayers <= 7) {
+            proportions = baseProportions[7];
+        } else if (cappedPlayers <= 10) {
+            proportions = baseProportions[10];
+        } else if (cappedPlayers <= 25) {
+            proportions = baseProportions[25];
+        } else if (cappedPlayers <= 50) {
+            proportions = baseProportions[50];
+        } else {
+            proportions = baseProportions[100];
         }
 
-        console.log('proporions: ', proportions)
-      
         return proportions;
-      }
+    };
+
+    const calculatePrizeDistribution = (players: number, totalPrizePool: number, buyIn: number) => {
+        if (!players || !totalPrizePool || !buyIn) {
+            return [];
+        }
+
+        const proportions = calculatePrizeProportions(players);
+        let remainingPrizePool = totalPrizePool;
+        const prizeDistribution: Prizes[] = [];
+
+        // Calculate how many places we can pay with minimum buyIn
+        const maxPlaces = Math.min(
+            Math.floor(totalPrizePool / buyIn), // Maximum places we can pay with buyIn minimum
+            proportions.length // Don't exceed our proportion array length
+        );
+
+        // Calculate prizes for all places except first
+        for (let i = maxPlaces - 1; i > 0; i--) {
+            const prize = Math.max(
+                Math.floor((proportions[i] / 100) * totalPrizePool),
+                buyIn // Ensure minimum payout is buyIn
+            );
+            if (remainingPrizePool - prize >= buyIn) { // Check if we can still pay at least buyIn to first place
+                prizeDistribution.unshift({ place: i + 1, prize });
+                remainingPrizePool -= prize;
+            } else {
+                break;
+            }
+        }
+
+        // Add first place with remaining prize pool
+        prizeDistribution.unshift({ place: 1, prize: remainingPrizePool });
+
+        return prizeDistribution;
+    };
 
     React.useEffect(() => {
         calculateTotalPrizePool();
         
-        const newPrizeDistribution = calculatePrizeDistribution(players, totalPrizePool, buyIn)
+        const newPrizeDistribution = calculatePrizeDistribution(players || 0, totalPrizePool || 0, buyIn || 0);
         setPrizeDistribution(newPrizeDistribution);
 
     }, [players, totalPrizePool, buyIn]);
@@ -208,6 +203,32 @@ const SettingsPage: React.FC = () => {
         
         // Navigate to tournament page
         navigate('/TournamentPage', { state: { tournamentData } }); 
+    };
+
+    const resetSettings = () => {
+        // Clear local storage
+        localStorage.removeItem('tournamentData');
+        
+        // Reset all state to default values
+        setPlayers(10);
+        setBuyIn(500);
+        setTotalPrizePool(5000);
+        setStartStack(2500);
+        setPrizeDistribution([]);
+        setChipValues([]);
+        setLevels([
+            { id: 1, level: "1", small: 10, big: 20, time: 15, isBreak: false },
+            { id: 2, level: "2", small: 25, big: 50, time: 15, isBreak: false },
+            { id: 3, level: "3", small: 50, big: 100, time: 15, isBreak: false },
+            { id: 4, level: "4", small: 75, big: 150, time: 15, isBreak: false },
+            { id: 5, level: "Break", small: 0, big: 0, time: 15, isBreak: true },
+            { id: 6, level: "5", small: 150, big: 300, time: 20, isBreak: false },
+            { id: 7, level: "6", small: 200, big: 400, time: 20, isBreak: false },
+            { id: 8, level: "7", small: 350, big: 700, time: 20, isBreak: false },
+            { id: 9, level: "8", small: 500, big: 1000, time: 20, isBreak: false },
+        ]);
+        setSelectedColor('red');
+        setChipValue(1);
     };
 
     // Level management functions
@@ -313,58 +334,75 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div>
-            <h1 className="poker-header">Pokertournament - Setup</h1>
+            <div className="flex justify-between items-center mb-4 px-4">
+                <h1 className="poker-header">Pokertournament - Setup</h1>
+                <button 
+                    onClick={resetSettings}
+                    className="cs-btn bg-red-600 hover:bg-red-700 px-4 py-2"
+                >
+                    Reset Settings
+                </button>
+            </div>
 
             <div className="grid-container">
-
                 <div className="grid-item">
                     <h2>Players settings</h2>
-                    <div className="pt-3">
-                        <input
-                            type="number"
-                            id="players"
-                            className="cs-input"
-                            value={players}
-                            onChange={(e) => setPlayers(parseInt(e.target.value))}
-                        />
-                        <label className="cs-input__label p-3" htmlFor="players">Number of players</label>
-                    </div>
-                    <div className="pt-3">
-                        <input
-                            type="number"
-                            id="buyin"
-                            className="cs-input"
-                            value={buyIn}
-                            step={10}
-                            onChange={(e) => setBuyIn(parseInt(e.target.value))}
-                        />          
-                        <label className="cs-input__label p-3" htmlFor="buyin">Buy-in</label>
-                    </div>
-                    <div className="pt-3">
-                        <input
-                            type="number"
-                            id="total-amount"
-                            className="cs-input"
-                            value={totalPrizePool}
-                            readOnly
-                            // disabled
-                        />
-                        <label className="cs-input__label p-3" htmlFor="total-amount">Total amount of money in price pool</label>
+                    <div className="player-settings-content">
+                        <div className="pt-3">
+                            <input
+                                type="number"
+                                id="players"
+                                className="cs-input"
+                                value={players || ''}
+                                onChange={(e) => {
+                                    const value = e.target.value === '' ? 0 : parseInt(e.target.value);
+                                    setPlayers(Math.min(value, 100));
+                                }}
+                                min="0"
+                            />
+                            <label className="cs-input__label p-3" htmlFor="players">Number of players (max 100)</label>
+                        </div>
+                        <div className="pt-3">
+                            <input
+                                type="number"
+                                id="buyin"
+                                className="cs-input"
+                                value={buyIn || ''}
+                                step={10}
+                                onChange={(e) => setBuyIn(e.target.value === '' ? 0 : parseInt(e.target.value))}
+                                min="0"
+                            />          
+                            <label className="cs-input__label p-3" htmlFor="buyin">Buy-in</label>
+                        </div>
+                        <div className="pt-3">
+                            <input
+                                type="number"
+                                id="total-amount"
+                                className="cs-input"
+                                value={totalPrizePool || ''}
+                                readOnly
+                            />
+                            <label className="cs-input__label p-3" htmlFor="total-amount">Total amount of money in price pool</label>
+                        </div>
                     </div>
                 </div>
 
                 <div className="grid-item">
                     <h2>Price table info</h2>
                     <div className="pt-3">
-                        {prizeDistribution.map((prize, index) => (
-                            <div key={index} className="price-box">
-                                {index === 0 && '🥇'}
-                                {index === 1 && '🥈'}
-                                {index === 2 && '🥉'}
-                                {index > 2 && `${index + 1}:th`}
-                                <span>{prize.prize}</span>
-                            </div>
-                        ))}
+                        {prizeDistribution && prizeDistribution.length > 0 ? (
+                            prizeDistribution.map((prize, index) => (
+                                <div key={index} className="price-box">
+                                    {index === 0 && '🥇'}
+                                    {index === 1 && '🥈'}
+                                    {index === 2 && '🥉'}
+                                    {index > 2 && `${index + 1}:th`}
+                                    <span>{prize?.prize || 0}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-gray-500">Enter number of players and buy-in to see prize distribution</div>
+                        )}
                     </div>
                 </div>
                
@@ -377,9 +415,10 @@ const SettingsPage: React.FC = () => {
                                 type="number"
                                 id="start-stack"
                                 className="cs-input"
-                                value={startStack}
+                                value={startStack || ''}
                                 step={10}
-                                onChange={(e) => setStartStack(parseInt(e.target.value))}
+                                onChange={(e) => setStartStack(e.target.value === '' ? 0 : parseInt(e.target.value))}
+                                min="0"
                             />
                             <label className="cs-input__label label p-3" htmlFor="start-stack">Start stack</label>
                         </div>
@@ -517,13 +556,39 @@ const SettingsPage: React.FC = () => {
                 </div>
 
                 <div className="grid-item">
-                    <button 
-                        id="start-tournament" 
-                        onClick={startTournament}
-                        className="cs-btn bg-green-600 hover:bg-green-700 text-lg px-8 py-3 w-full"
-                    >
-                        Start Tournament
-                    </button>
+                    <div className="flex flex-col gap-4">
+                        {isTournamentActive ? (
+                            <>
+                                <button 
+                                    onClick={() => {
+                                        const savedData = localStorage.getItem('tournamentData');
+                                        if (savedData) {
+                                            navigate('/TournamentPage', { 
+                                                state: { tournamentData: JSON.parse(savedData) }
+                                            });
+                                        }
+                                    }}
+                                    className="cs-btn bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3 w-full"
+                                >
+                                    Back to Tournament
+                                </button>
+                                <button 
+                                    disabled
+                                    className="cs-btn bg-gray-600 cursor-not-allowed text-lg px-8 py-3 w-full opacity-50"
+                                >
+                                    Tournament in Progress
+                                </button>
+                            </>
+                        ) : (
+                            <button 
+                                id="start-tournament" 
+                                onClick={startTournament}
+                                className="cs-btn bg-green-600 hover:bg-green-700 text-lg px-8 py-3 w-full"
+                            >
+                                Start Tournament
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
