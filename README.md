@@ -61,6 +61,23 @@ export default tseslint.config({
 - [ ] Transfer the values from Setting page to Tournament page. 
 
 
+# Poker Tournament App
+
+This React application facilitates the setup and management of poker tournaments.  It allows users to configure key parameters such as:
+
+* Number of players
+* Buy-in amount
+* Starting chip stack
+* Chip denominations and colors
+* Blind structure
+
+The app automatically calculates the prize pool distribution based on the number of players and buy-in.  It also provides a visual representation of the chip values and blind levels.  The application is currently under development, and future features may include:
+
+* Timer functionality
+* Player registration
+* Tournament tracking
+* Hand history recording
+
 ## 🐞 Kända Buggar
 1. **Page crash if you add more then 50 players**
    - **Desription:** Something wrong with the code when adding more then 50 players on SettingsPage.
