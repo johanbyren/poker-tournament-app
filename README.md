@@ -57,9 +57,24 @@ export default tseslint.config({
 
 ## 📝 TODO: 
 - [ ] Implement table for timetracking and raise. Values most be possible to edit. 
-- [ ] Implement the Tournament page and make it possible to change to it. 
-- [ ] Transfer the values from Setting page to Tournament page. 
 
+
+## Poker Tournament App
+
+This application helps manage a poker tournament.  It allows you to set up key tournament parameters, such as:
+
+* Number of players
+* Buy-in amount
+* Blind structure (small blind, big blind, and level duration)
+* Breaks
+* Prize distribution
+
+The app provides two main pages:
+
+* **Settings Page:** Configure all the tournament parameters.
+* **Tournament Page:**  (TODO: Implement) View the current tournament state, including blind levels, remaining players, and prize pool distribution.
+
+To use the application, navigate between the Settings and Tournament pages (once implemented) to configure and then run your tournament.
 
 ## 🐞 Kända Buggar
 1. **Page crash if you add more then 50 players**
