@@ -34,7 +34,7 @@ const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
 
     // State for the values, with some standard values
-    const [players, setPlayers] = useState(10);
+    const [players, setPlayers] = useState(8);
     const [buyIn, setBuyIn] = useState(500);
     const [totalPrizePool, setTotalPrizePool] = useState(5000);
     const [startStack, setStartStack] = useState(2500);
