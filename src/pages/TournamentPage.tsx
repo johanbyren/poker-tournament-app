@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { useLocation } from 'react-router-dom';
 
+import { Level } from './SettingsPage';
+
 interface LocationState {
-    timerDuration: number;
-    chipValues: {
-        white: number;
-        red: number;
-    };
+    levels: Level[];
 }
 
 const TournamentPage: React.FC = () => {
@@ -20,9 +18,11 @@ const TournamentPage: React.FC = () => {
             <h1>Spelsida</h1>
                 {state && (
                 <>
-                    <p>Timer: {state.timerDuration}</p>
-                    <p>Vit marker: {state.chipValues.white}</p>
-                    <p>Röd marker: {state.chipValues.red}</p>
+                    {state.levels.map((level, index) => (
+                        <div key={index}>
+                            <p>Level: {level.level}, Small Blind: {level.smallBlind}, Big Blind: {level.bigBlind}, Time: {level.time}</p>
+                        </div>
+                    ))}
                 </>
                 )}
             </div>
