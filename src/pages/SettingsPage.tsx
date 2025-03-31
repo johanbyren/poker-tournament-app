@@ -363,12 +363,17 @@ const SettingsPage: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-4 px-4">
                 <h1 className="poker-header">Pokertournament - Setup</h1>
-                <button 
-                    onClick={resetSettings}
-                    className="cs-btn bg-red-600 hover:bg-red-700 px-4 py-2"
-                >
-                    Reset Settings
-                </button>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={resetSettings}
+                        className="cs-btn bg-red-600 hover:bg-red-700 px-4 py-2"
+                    >
+                        Reset Settings
+                    </button>
+                    {isTournamentActive && (
+                        <h1 className="poker-header">Tournament in Progress</h1>
+                    )}
+                </div>
             </div>
 
             <div className="grid-container">

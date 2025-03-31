@@ -283,7 +283,7 @@ const TournamentPage: React.FC = () => {
                                                         }}
                                                     />
                                                     <label htmlFor={`rebuy-${index}`} className="cs-checkbox__label">
-                                                        Re-buy #{index + 1}
+                                                        Re-buy: {index + 1}
                                                     </label>
                                                 </div>
                                             ))}
