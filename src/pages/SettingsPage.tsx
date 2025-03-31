@@ -229,11 +229,10 @@ const SettingsPage: React.FC = () => {
         setTotalPrizePool(5000);
         setStartStack(2500);
         setPrizeDistribution([
-            { place: 1, prize: 2250 },  // 45% of 5000
-            { place: 2, prize: 1000 },  // 20% of 5000
-            { place: 3, prize: 1000 },  // 20% of 5000
-            { place: 4, prize: 500 },   // 10% of 5000
-            { place: 5, prize: 250 }    // 5% of 5000
+            { place: 1, prize: 2500 },
+            { place: 2, prize: 1250 },
+            { place: 3, prize: 750 },
+            { place: 4, prize: 500 },
         ]);
         setChipValues([
             { color: 'white', value: 10 },
