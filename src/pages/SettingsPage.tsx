@@ -262,11 +262,31 @@ const SettingsPage: React.FC = () => {
     const handleLevelChange = (id: number, field: keyof Level, value: string | number | boolean) => {
         setLevels(levels.map(level => {
             if (level.id === id) {
-                const updatedLevel = { ...level, [field]: value };
-                // If small blind changes, update big blind automatically
-                if (field === 'small' && !level.isBreak) {
-                    updatedLevel.big = (value as number) * 2;
+                const updatedLevel = { ...level };
+                
+                switch (field) {
+                    case 'small':
+                    case 'big':
+                        const numValue = value === '' ? 0 : Number(value);
+                        updatedLevel[field] = isNaN(numValue) ? 0 : numValue;
+                        if (field === 'small' && !level.isBreak) {
+                            updatedLevel.big = isNaN(numValue) ? 0 : numValue * 2;
+                        }
+                        break;
+                    case 'time':
+                        updatedLevel.time = Number(value) || 0;
+                        break;
+                    case 'level':
+                        updatedLevel.level = String(value);
+                        break;
+                    case 'isBreak':
+                        updatedLevel.isBreak = Boolean(value);
+                        break;
+                    case 'id':
+                        updatedLevel.id = Number(value);
+                        break;
                 }
+                
                 return updatedLevel;
             }
             return level;
