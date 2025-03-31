@@ -28,6 +28,8 @@ export interface TournamentData {
     prizeDistribution: Prizes[];
     chips: Chips[];
     levels: Level[];
+    isRebuyAllowed: boolean;
+    rebuyValue: number;
 }
 
 const SettingsPage: React.FC = () => {
@@ -56,7 +58,8 @@ const SettingsPage: React.FC = () => {
     const [selectedColor, setSelectedColor] = useState('red');
     const [chipValue, setChipValue] = useState(1);
     const [isTournamentActive, setIsTournamentActive] = useState(false);
-  
+    const [isRebuyAllowed, setIsRebuyAllowed] = useState(false);
+    const [rebuyValue, setRebuyValue] = useState(0);
 
     // Load saved tournament data when component mounts
     useEffect(() => {
@@ -70,6 +73,8 @@ const SettingsPage: React.FC = () => {
             setPrizeDistribution(tournamentData.prizeDistribution);
             setChipValues(tournamentData.chips);
             setLevels(tournamentData.levels);
+            setIsRebuyAllowed(tournamentData.isRebuyAllowed || false);
+            setRebuyValue(tournamentData.rebuyValue);
         }
     }, []);
 
@@ -195,7 +200,9 @@ const SettingsPage: React.FC = () => {
             startStack,
             prizeDistribution,
             chips,
-            levels
+            levels,
+            isRebuyAllowed,
+            rebuyValue
         };
 
         // Save to local storage
@@ -208,6 +215,7 @@ const SettingsPage: React.FC = () => {
     const resetSettings = () => {
         // Clear local storage
         localStorage.removeItem('tournamentData');
+        localStorage.removeItem('timerState');
         
         // Reset all state to default values
         setPlayers(10);
@@ -229,6 +237,8 @@ const SettingsPage: React.FC = () => {
         ]);
         setSelectedColor('red');
         setChipValue(1);
+        setIsTournamentActive(false);
+        setIsRebuyAllowed(false);
     };
 
     // Level management functions
@@ -383,6 +393,20 @@ const SettingsPage: React.FC = () => {
                                 readOnly
                             />
                             <label className="cs-input__label p-3" htmlFor="total-amount">Total amount of money in price pool</label>
+                        </div>
+                        <div className="pt-3">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="allow-rebuy"
+                                    checked={isRebuyAllowed}
+                                    onChange={(e) => setIsRebuyAllowed(e.target.checked)}
+                                    className="form-checkbox h-5 w-5 text-blue-600"
+                                />
+                                <label htmlFor="allow-rebuy" className="text-sm font-medium">
+                                    Allow Re-buys
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

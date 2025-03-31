@@ -25,7 +25,7 @@ const TournamentPage: React.FC = () => {
         return <div className="text-center mt-8">No tournament data available</div>;
     }
 
-    const { players, buyIn, totalPrizePool, startStack, prizeDistribution, chips, levels } = tournamentData;
+    const { players, buyIn, totalPrizePool, startStack, prizeDistribution, chips, levels, rebuyValue, isRebuyAllowed } = tournamentData;
     
     // Timer and level state
     const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
@@ -33,7 +33,77 @@ const TournamentPage: React.FC = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [isBlinking, setIsBlinking] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
+    const [isTournamentActive, setIsTournamentActive] = useState(false);
+    const [rebuys, setRebuys] = useState<boolean[]>([false]);
+    const [currentPrizeDistribution, setCurrentPrizeDistribution] = useState(prizeDistribution);
+    const prevRebuyCountRef = useRef(0);
     
+    // Calculate total prize pool including rebuys
+    const calculateTotalPrizePool = () => {
+        const basePrizePool = totalPrizePool || 0;
+        const numberOfRebuys = rebuys.filter(rebuy => rebuy).length;
+        const rebuyAmount = (buyIn || 0) * numberOfRebuys;
+        return basePrizePool + rebuyAmount;
+    };
+
+    // Calculate updated prize distribution including rebuys
+    const calculateRebuyAdded = () => {
+        const updatedPrizes = [...prizeDistribution];
+
+        // If we have 3 or more spots, split rebuy 50/30/20
+        if (updatedPrizes.length >= 3) {
+            // Add the total rebuy amount according to percentages
+            updatedPrizes[0].prize = updatedPrizes[0].prize + Math.floor(buyIn * 0.5);
+            updatedPrizes[1].prize = updatedPrizes[1].prize + Math.floor(buyIn * 0.3);
+            updatedPrizes[2].prize = updatedPrizes[2].prize + Math.floor(buyIn * 0.2);
+        }
+        // If we have 2 spots, split rebuy 70/30
+        else if (updatedPrizes.length === 2) {
+            updatedPrizes[0].prize = updatedPrizes[0].prize + Math.floor(buyIn * 0.7);
+            updatedPrizes[1].prize = updatedPrizes[1].prize + Math.floor(buyIn * 0.3);
+        }
+        // If we have 1 spot, give all rebuy to first place
+        else if (updatedPrizes.length === 1) {
+            updatedPrizes[0].prize = updatedPrizes[0].prize + buyIn;
+        }
+
+        return updatedPrizes;
+    };
+
+    const calculateRebuyRemoved = () => {
+        const updatedPrizes = [...prizeDistribution];
+
+        if (updatedPrizes.length >= 3) {
+            updatedPrizes[0].prize = updatedPrizes[0].prize - Math.floor(buyIn * 0.5);
+            updatedPrizes[1].prize = updatedPrizes[1].prize - Math.floor(buyIn * 0.3);
+            updatedPrizes[2].prize = updatedPrizes[2].prize - Math.floor(buyIn * 0.2);
+        } else if (updatedPrizes.length === 2) {
+            updatedPrizes[0].prize = updatedPrizes[0].prize - Math.floor(buyIn * 0.7);
+            updatedPrizes[1].prize = updatedPrizes[1].prize - Math.floor(buyIn * 0.3);
+        } else if (updatedPrizes.length === 1) {
+            updatedPrizes[0].prize = updatedPrizes[0].prize - buyIn;
+        }
+
+        return updatedPrizes;
+    };
+
+    // Update prize distribution when rebuys change
+    useEffect(() => {
+        const currentRebuyCount = rebuys.filter(r => r).length;
+        let updatedPrizes = [...currentPrizeDistribution];
+
+        if (currentRebuyCount > prevRebuyCountRef.current) {
+            updatedPrizes = calculateRebuyAdded();
+        }
+        else if (currentRebuyCount < prevRebuyCountRef.current) {
+            updatedPrizes = calculateRebuyRemoved();
+        }
+
+        // Update the previous count for next comparison
+        prevRebuyCountRef.current = currentRebuyCount;
+        setCurrentPrizeDistribution(updatedPrizes);
+    }, [rebuys]);
+
     // Load initial timer state - only run once on mount
     useEffect(() => {
         const savedTimerState = localStorage.getItem('timerState');
@@ -172,18 +242,60 @@ const TournamentPage: React.FC = () => {
                 <div className={`grid-item col-span-full ${isBlinking ? 'animate-blink bg-red-900' : ''}`}>
                     <div className="flex items-center justify-between py-8">
                         {/* Tournament Info - Left Side */}
-                        <div className="w-1/3">
+                        <div className="w-1/4">
                             <h2 className="text-2xl font-bold mb-4">Tournament Info</h2>
-                            <div className="space-y-2">
-                                <p className="text-xl">Players: {players}</p>
-                                <p className="text-xl">Buy-in: {buyIn}</p>
-                                <p className="text-xl">Total Prize Pool: {totalPrizePool}</p>
-                                <p className="text-xl">Starting Stack: {startStack}</p>
+                            <div className="flex justify-between">
+                                <div className="space-y-2">
+                                    <p className="text-xl">Players: {players}</p>
+                                    <p className="text-xl">Buy-in: {buyIn}</p>
+                                    <p className="text-xl">Total Prize Pool: {calculateTotalPrizePool()}</p>
+                                    <p className="text-xl">Starting Stack: {startStack}</p>
+                                </div>
+                                {tournamentData.isRebuyAllowed && (
+                                    <div className="border-l pl-4">
+                                        <h3 className="text-xl font-bold mb-2">Re-buys</h3>
+                                        <div className="space-y-2">
+                                            {rebuys.map((rebuy, index) => (
+                                                <div key={index} className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`rebuy-${index}`}
+                                                        checked={rebuy}
+                                                        onChange={(e) => {
+                                                            const newRebuys = [...rebuys];
+                                                            newRebuys[index] = e.target.checked;
+                                                            
+                                                            if (e.target.checked) {
+                                                                // If checking the last box, add a new one
+                                                                if (index === newRebuys.length - 1) {
+                                                                    newRebuys.push(false);
+                                                                }
+                                                            } else {
+                                                                // If unchecking a box, remove it and shift all boxes after it up one position
+                                                                newRebuys.splice(index, 1);
+                                                                // If we removed the last box, add a new unchecked box
+                                                                if (newRebuys.length === 0) {
+                                                                    newRebuys.push(false);
+                                                                }
+                                                            }
+                                                            
+                                                            setRebuys(newRebuys);
+                                                        }}
+                                                        className="form-checkbox h-5 w-5 text-blue-600"
+                                                    />
+                                                    <label htmlFor={`rebuy-${index}`} className="text-xl">
+                                                        Re-buy #{index + 1}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Timer Section - Center */}
-                        <div className="w-1/3 flex flex-col items-center justify-center">
+                        <div className="w-2/4 flex flex-col items-center justify-center">
                             <div className="text-4xl font-bold mb-4">
                                 LEVEL {currentLevel?.isBreak ? "BREAK" : currentLevel?.level}
                             </div>
@@ -219,8 +331,8 @@ const TournamentPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Tournament Info - Right Side */}
-                        <div className="w-1/3"></div>
+                        {/* Right Side - Empty */}
+                        <div className="w-1/4"></div>
                     </div>
                 </div>
 
@@ -228,7 +340,7 @@ const TournamentPage: React.FC = () => {
                     <div className="tournament-info">
                         <div className="tournament-section">
                             <h3>Prize Distribution</h3>
-                            {prizeDistribution.map((prize: Prizes, index: number) => (
+                            {currentPrizeDistribution.map((prize: Prizes, index: number) => (
                                 <div key={index} className="price-box">
                                     <span>
                                         {index === 0 && '🥇'}
@@ -269,7 +381,7 @@ const TournamentPage: React.FC = () => {
                                                         <td>{level.small}</td>
                                                         <td>{level.big}</td>
                                                         <td>{level.time}</td>
-                                                    </>
+                                                </>
                                                 )}
                                             </tr>
                                         ))}

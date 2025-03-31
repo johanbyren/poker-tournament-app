@@ -29,6 +29,10 @@ body {
   min-height: 100vh;
 }
 
+.cs-input {
+  width: 150px;
+}
+
 .poker-header {
   text-align: center;
   padding: 20px;
@@ -168,7 +172,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
+}
+
+.chip-display img {
+  width: 3rem;
+  height: 3rem;
+}
+
+.chip-display span {
+  font-size: 1rem;
+  font-weight: bold;
 }
 
 .chips-container {
@@ -211,10 +225,15 @@ body {
 .player-settings-content {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: flex-start;
 }
 
 .player-settings-content > div {
     flex-shrink: 0;
+}
+
+/* Remove the pt-3 spacing since we're using gap now */
+.player-settings-content .pt-3 {
+    padding-top: 0;
 }
