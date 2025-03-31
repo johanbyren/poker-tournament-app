@@ -256,7 +256,7 @@ const TournamentPage: React.FC = () => {
                                         <h3 className="text-xl font-bold mb-2">Re-buys</h3>
                                         <div className="space-y-2">
                                             {rebuys.map((rebuy, index) => (
-                                                <div key={index} className="flex items-center gap-2">
+                                                <div key={index} className="cs-checkbox flex items-center gap-2">
                                                     <input
                                                         type="checkbox"
                                                         id={`rebuy-${index}`}
@@ -281,9 +281,8 @@ const TournamentPage: React.FC = () => {
                                                             
                                                             setRebuys(newRebuys);
                                                         }}
-                                                        className="form-checkbox h-5 w-5 text-blue-600"
                                                     />
-                                                    <label htmlFor={`rebuy-${index}`} className="text-xl">
+                                                    <label htmlFor={`rebuy-${index}`} className="cs-checkbox__label">
                                                         Re-buy #{index + 1}
                                                     </label>
                                                 </div>

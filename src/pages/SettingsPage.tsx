@@ -42,7 +42,12 @@ const SettingsPage: React.FC = () => {
     const [totalPrizePool, setTotalPrizePool] = useState(5000);
     const [startStack, setStartStack] = useState(2500);
     const [prizeDistribution, setPrizeDistribution] = useState<Prizes[]>([]);
-    const [chips, setChipValues] = useState<Chips[]>([]);
+    const [chips, setChipValues] = useState<Chips[]>([
+        { color: 'white', value: 10 },
+        { color: 'red', value: 50 },
+        { color: 'blue', value: 100 },
+        { color: 'black', value: 500 }
+    ]);
     const [levels, setLevels] = useState<Level[]>([
         { id: 1, level: "1", small: 10, big: 20, time: 15, isBreak: false },
         { id: 2, level: "2", small: 25, big: 50, time: 15, isBreak: false },
@@ -58,7 +63,7 @@ const SettingsPage: React.FC = () => {
     const [selectedColor, setSelectedColor] = useState('red');
     const [chipValue, setChipValue] = useState(1);
     const [isTournamentActive, setIsTournamentActive] = useState(false);
-    const [isRebuyAllowed, setIsRebuyAllowed] = useState(false);
+    const [isRebuyAllowed, setIsRebuyAllowed] = useState(true);
     const [rebuyValue, setRebuyValue] = useState(0);
 
     // Load saved tournament data when component mounts
@@ -123,10 +128,10 @@ const SettingsPage: React.FC = () => {
         const baseProportions: { [key: string]: number[] } = {
             5: [100],
             7: [55, 25, 20],
-            10: [45, 20, 20, 10, 5],
-            25: [40, 25, 15, 10, 5, 5],
-            50: [30, 20, 15, 10, 8, 7, 5, 5],
-            100: [25, 17, 12, 7, 6, 5, 4, 4, 3, 3, 3, 2, 1]
+            15: [50, 25, 15, 10],
+            25: [45, 25, 15, 10, 5],
+            50: [35, 20, 15, 10, 8, 7, 5],
+            100: [26, 17, 12, 7, 6, 5, 4, 4, 3, 3, 3, 2]
         };
       
         // Find the appropriate base distribution
@@ -135,8 +140,8 @@ const SettingsPage: React.FC = () => {
             proportions = baseProportions[5];
         } else if (cappedPlayers <= 7) {
             proportions = baseProportions[7];
-        } else if (cappedPlayers <= 10) {
-            proportions = baseProportions[10];
+        } else if (cappedPlayers <= 15) {
+            proportions = baseProportions[15];
         } else if (cappedPlayers <= 25) {
             proportions = baseProportions[25];
         } else if (cappedPlayers <= 50) {
@@ -145,7 +150,8 @@ const SettingsPage: React.FC = () => {
             proportions = baseProportions[100];
         }
 
-        return proportions;
+        // Ensure we always return a valid array
+        return proportions || [100];
     };
 
     const calculatePrizeDistribution = (players: number, totalPrizePool: number, buyIn: number) => {
@@ -222,8 +228,19 @@ const SettingsPage: React.FC = () => {
         setBuyIn(500);
         setTotalPrizePool(5000);
         setStartStack(2500);
-        setPrizeDistribution([]);
-        setChipValues([]);
+        setPrizeDistribution([
+            { place: 1, prize: 2250 },  // 45% of 5000
+            { place: 2, prize: 1000 },  // 20% of 5000
+            { place: 3, prize: 1000 },  // 20% of 5000
+            { place: 4, prize: 500 },   // 10% of 5000
+            { place: 5, prize: 250 }    // 5% of 5000
+        ]);
+        setChipValues([
+            { color: 'white', value: 10 },
+            { color: 'red', value: 50 },
+            { color: 'blue', value: 100 },
+            { color: 'black', value: 500 }
+        ]);
         setLevels([
             { id: 1, level: "1", small: 10, big: 20, time: 15, isBreak: false },
             { id: 2, level: "2", small: 25, big: 50, time: 15, isBreak: false },
@@ -238,7 +255,7 @@ const SettingsPage: React.FC = () => {
         setSelectedColor('red');
         setChipValue(1);
         setIsTournamentActive(false);
-        setIsRebuyAllowed(false);
+        setIsRebuyAllowed(true);
     };
 
     // Level management functions
@@ -395,17 +412,14 @@ const SettingsPage: React.FC = () => {
                             <label className="cs-input__label p-3" htmlFor="total-amount">Total amount of money in price pool</label>
                         </div>
                         <div className="pt-3">
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="allow-rebuy"
+                            <div className="cs-checkbox flex items-center gap-2">
+                                <input 
+                                    id="checkbox" 
+                                    type="checkbox" 
                                     checked={isRebuyAllowed}
                                     onChange={(e) => setIsRebuyAllowed(e.target.checked)}
-                                    className="form-checkbox h-5 w-5 text-blue-600"
                                 />
-                                <label htmlFor="allow-rebuy" className="text-sm font-medium">
-                                    Allow Re-buys
-                                </label>
+                                <label className="cs-checkbox__label" htmlFor="checkbox"> Allow Re-buys</label>
                             </div>
                         </div>
                     </div>
