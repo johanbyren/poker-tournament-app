@@ -251,45 +251,6 @@ const TournamentPage: React.FC = () => {
                                     <p className="text-xl">Total Prize Pool: {calculateTotalPrizePool()}</p>
                                     <p className="text-xl">Starting Stack: {startStack}</p>
                                 </div>
-                                {tournamentData.isRebuyAllowed && (
-                                    <div className="border-l pl-4">
-                                        <h3 className="text-xl font-bold mb-2">Re-buys</h3>
-                                        <div className="space-y-2">
-                                            {rebuys.map((rebuy, index) => (
-                                                <div key={index} className="cs-checkbox flex items-center gap-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`rebuy-${index}`}
-                                                        checked={rebuy}
-                                                        onChange={(e) => {
-                                                            const newRebuys = [...rebuys];
-                                                            newRebuys[index] = e.target.checked;
-                                                            
-                                                            if (e.target.checked) {
-                                                                // If checking the last box, add a new one
-                                                                if (index === newRebuys.length - 1) {
-                                                                    newRebuys.push(false);
-                                                                }
-                                                            } else {
-                                                                // If unchecking a box, remove it and shift all boxes after it up one position
-                                                                newRebuys.splice(index, 1);
-                                                                // If we removed the last box, add a new unchecked box
-                                                                if (newRebuys.length === 0) {
-                                                                    newRebuys.push(false);
-                                                                }
-                                                            }
-                                                            
-                                                            setRebuys(newRebuys);
-                                                        }}
-                                                    />
-                                                    <label htmlFor={`rebuy-${index}`} className="cs-checkbox__label">
-                                                        Re-buy: {index + 1}
-                                                    </label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
 
@@ -339,17 +300,60 @@ const TournamentPage: React.FC = () => {
                     <div className="tournament-info">
                         <div className="tournament-section">
                             <h3>Prize Distribution</h3>
-                            {currentPrizeDistribution.map((prize: Prizes, index: number) => (
-                                <div key={index} className="price-box">
-                                    <span>
-                                        {index === 0 && '🥇'}
-                                        {index === 1 && '🥈'}
-                                        {index === 2 && '🥉'}
-                                        {index > 2 && `${index + 1}:th`}
-                                    </span>
-                                    <span>{prize.prize}</span>
+                            <div className="flex justify-start gap-16">
+                                <div className="space-y-2">
+                                    {currentPrizeDistribution.map((prize: Prizes, index: number) => (
+                                        <div key={index} className="price-box">
+                                            <span>
+                                                {index === 0 && '🥇'}
+                                                {index === 1 && '🥈'}
+                                                {index === 2 && '🥉'}
+                                                {index > 2 && `${index + 1}:th`}
+                                            </span>
+                                            <span>{prize.prize}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                                {tournamentData.isRebuyAllowed && (
+                                    <div className="border-l pl-4">
+                                        <h3>Re-buys</h3>
+                                        <div className="space-y-2">
+                                            {rebuys.map((rebuy, index) => (
+                                                <div key={index} className="cs-checkbox flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`rebuy-${index}`}
+                                                        checked={rebuy}
+                                                        onChange={(e) => {
+                                                            const newRebuys = [...rebuys];
+                                                            newRebuys[index] = e.target.checked;
+                                                            
+                                                            if (e.target.checked) {
+                                                                // If checking the last box, add a new one
+                                                                if (index === newRebuys.length - 1) {
+                                                                    newRebuys.push(false);
+                                                                }
+                                                            } else {
+                                                                // If unchecking a box, remove it and shift all boxes after it up one position
+                                                                newRebuys.splice(index, 1);
+                                                                // If we removed the last box, add a new unchecked box
+                                                                if (newRebuys.length === 0) {
+                                                                    newRebuys.push(false);
+                                                                }
+                                                            }
+                                                            
+                                                            setRebuys(newRebuys);
+                                                        }}
+                                                    />
+                                                    <label htmlFor={`rebuy-${index}`} className="cs-checkbox__label">
+                                                        Re-buy: {index + 1}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="tournament-section">
